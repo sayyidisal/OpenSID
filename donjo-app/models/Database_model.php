@@ -181,8 +181,39 @@
 		$this->migrasi_1905_ke_1906();
   }
 
-  private function migrasi_1905_ke_1906()
-  {
+	private function migrasi_1905_ke_1906()
+	{
+		$this->db->where('id', 62)->update('setting_modul', array('url'=>'gis/clear', 'aktif'=>'1'));
+
+		// Penambahan widget keuangan
+		$widget = $this->db->select('id, isi')->where('isi', 'keuangan.php')->get('widget')->row();
+		if (empty($widget))
+		{
+			$query = "
+				INSERT INTO widget (`isi`, `enabled`, `judul`, `jenis_widget`, `urut`, `form_admin`, `setting`) VALUES
+				('keuangan.php', '1', 'Keuangan', '1', '15', 'keuangan/widget', '');
+			";
+			$this->db->query($query);
+		}
+		// Tambah menu navigasi untuk keuangan
+		$query = "
+			INSERT INTO setting_modul (`id`, `modul`, `url`, `aktif`, `ikon`, `urut`, `level`, `parent`, `hidden`, `ikon_kecil`) VALUES
+			('201', 'Keuangan', 'keuangan', '1', 'fa-balance-scale', '6', '2', '0', '0', 'fa-balance-scale'),
+			('202', 'Impor Data', 'keuangan/import_data', '1', 'fa-cloud-upload', '6', '2', '201', '0', 'fa-cloud-upload'),
+			('203', 'Widget', 'widget/keuangan', '1', 'fa-bar-chart', '6', '2', '201', '0', 'fa-bar-chart')
+			ON DUPLICATE KEY UPDATE url = VALUES(url);
+		";
+		$this->db->query($query);
+		$this->data_siskeudes();
+		 // Buat folder desa/upload/keuangan apabila belum ada
+		 if (!file_exists(LOKASI_KEUANGAN_ZIP))
+		 {
+			 mkdir(LOKASI_KEUANGAN_ZIP, 0755);
+		 }
+	}
+
+	private function data_siskeudes()
+	{
 		//insert tabel-tabel keuangan
 		if (!$this->db->table_exists('keuangan_master') )
 		{
@@ -567,7 +598,7 @@
 				`nm_kaur_keu` varchar(100) NOT NULL,
 				`jbt_kaur_keu` varchar(100) NOT NULL,
 				`nm_bendahara` varchar(100) NOT NULL,
-				`nm_bendahara` varchar(100) NOT NULL,
+				`jbt_bendahara` varchar(100) NOT NULL,
 				`no_perdes` varchar(100) NOT NULL,
 				`tgl_perdes` varchar(100) NOT NULL,
 				`no_perdes_pb` varchar(100) NOT NULL,
@@ -971,6 +1002,7 @@
 				`Kd_Desa` varchar(100) NOT NULL,
 				`ID_Tujuan` varchar(100) NOT NULL,
 				`No_Sasaran` varchar(100) NOT NULL,
+				`Uraian_Sasaran` varchar(100) NOT NULL,
 				PRIMARY KEY (`id`)
 			)";
 			$this->db->query($query);
@@ -1158,6 +1190,24 @@
 			$this->db->query($query);
 		}
 
+		//insert keuangan_ta_spp_rinci
+		if (!$this->db->table_exists('keuangan_ta_spp_rinci') )
+		{
+			$query = "
+			CREATE TABLE IF NOT EXISTS `keuangan_ta_spp_rinci` (
+				`id` int(11) NOT NULL AUTO_INCREMENT,
+				`id_keuangan_master` int(11) NOT NULL,
+				`Kd_Desa` varchar(100) NOT NULL,
+				`No_SPP` varchar(100) NOT NULL,
+				`Kd_Keg` varchar(100) NOT NULL,
+				`Kd_Rincian` varchar(100) NOT NULL,
+				`Sumberdana` varchar(100) NOT NULL,
+				`Nilai` varchar(100) NOT NULL,
+				PRIMARY KEY (`id`)
+			)";
+			$this->db->query($query);
+		}
+
 		//insert keuangan_ta_sppbukti
 		if (!$this->db->table_exists('keuangan_ta_sppbukti') )
 		{
@@ -1176,6 +1226,7 @@
 				`alamat` varchar(100) NOT NULL,
 				`rek_bank` varchar(100) NOT NULL,
 				`nm_bank` varchar(100) NOT NULL,
+				`npwp` varchar(100) NOT NULL,
 				`keterangan` varchar(100) NOT NULL,
 				`nilai` varchar(100) NOT NULL,
 				PRIMARY KEY (`id`)
@@ -1300,12 +1351,12 @@
 				`Kd_Keg` varchar(100) NOT NULL,
 				`Kd_Rincian` varchar(100) NOT NULL,
 				`Anggaran` varchar(100) NOT NULL,
-				`AnggaranPAK ` varchar(100) NOT NULL,
-				`Tw1Rinci ` varchar(100) NOT NULL,
-				`Tw2Rinci ` varchar(100) NOT NULL,
-				`Tw3Rinci ` varchar(100) NOT NULL,
-				`Tw4Rinci ` varchar(100) NOT NULL,
-				`KunciData ` varchar(100) NOT NULL,
+				`AnggaranPAK` varchar(100) NOT NULL,
+				`Tw1Rinci` varchar(100) NOT NULL,
+				`Tw2Rinci` varchar(100) NOT NULL,
+				`Tw3Rinci` varchar(100) NOT NULL,
+				`Tw4Rinci` varchar(100) NOT NULL,
+				`KunciData` varchar(100) NOT NULL,
 				PRIMARY KEY (`id`)
 			)";
 			$this->db->query($query);
@@ -1327,17 +1378,16 @@
 				`Kd_Keg` varchar(100) NOT NULL,
 				`Kd_Rincian` varchar(100) NOT NULL,
 				`Anggaran` varchar(100) NOT NULL,
-				`AnggaranPAK ` varchar(100) NOT NULL,
-				`Tw1Rinci ` varchar(100) NOT NULL,
-				`Tw2Rinci ` varchar(100) NOT NULL,
-				`Tw3Rinci ` varchar(100) NOT NULL,
-				`Tw4Rinci ` varchar(100) NOT NULL,
-				`KunciData ` varchar(100) NOT NULL,
+				`AnggaranPAK` varchar(100) NOT NULL,
+				`Tw1Rinci` varchar(100) NOT NULL,
+				`Tw2Rinci` varchar(100) NOT NULL,
+				`Tw3Rinci` varchar(100) NOT NULL,
+				`Tw4Rinci` varchar(100) NOT NULL,
+				`KunciData` varchar(100) NOT NULL,
 				PRIMARY KEY (`id`)
 			)";
 			$this->db->query($query);
 		}
-
 	}
 
   private function migrasi_1904_ke_1905()
@@ -1363,6 +1413,12 @@
 			ON DUPLICATE KEY UPDATE url = VALUES(url);
 	  ";
 	  $this->db->query($query);
+		// $this->data_siskeudes();
+		 // Buat folder desa/upload/keuangan apabila belum ada
+		 if (!file_exists(LOKASI_KEUANGAN_ZIP))
+		 {
+			 mkdir(LOKASI_KEUANGAN_ZIP, 0755);
+		 }
 	}
 
   private function migrasi_1903_ke_1904()
