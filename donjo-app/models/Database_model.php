@@ -185,6 +185,46 @@
 
   private function migrasi_1905_ke_1906()
   {
+  	// Tambah menu teks berjalan
+		$data = array(
+			'id' => '64',
+			'modul' => 'Teks Berjalan',
+			'url' => 'web/teks_berjalan',
+			'aktif' => '1',
+			'ikon' => 'fa-ellipsis-h',
+			'urut' => '9',
+			'level' => '2',
+			'parent' => '13',
+			'hidden' => '0',
+			'ikon_kecil' => 'fa-ellipsis-h'
+		);
+		$sql = $this->db->insert_string('setting_modul', $data) . " ON DUPLICATE KEY UPDATE url = VALUES(url), ikon = VALUES(ikon), ikon_kecil = VALUES(ikon_kecil)";
+		$this->db->query($sql);
+		$pilihan_sumber = $this->db->select('id')->where('key','isi_teks_berjalan')->get('setting_aplikasi')->row()->id;
+		if (!$pilihan_sumber)
+		{
+			$data = array(
+				'key' => 'isi_teks_berjalan',
+				'keterangan' => 'Isi Teks Berjalan di Web',
+				'jenis' => 'area',
+				'kategori' => 'web'
+			);
+			$this->db->insert('setting_aplikasi', $data);
+		}
+		$teks = $this->db->select('a.isi')
+			->from('artikel a')
+			->join('kategori k', 'a.id_kategori = k.id', 'left')
+			->where('k.kategori', 'teks_berjalan')
+			->where('k.enabled', 1)
+			->where('a.enabled', 1)
+			->get()->result_array();
+
+		// $sql = "SELECT a.isi
+		// 	FROM artikel a
+		// 	LEFT JOIN kategori k ON a.id_kategori = k.id
+		// 	WHERE k.kategori = 'teks_berjalan' AND k.enabled = 1 AND a.tgl_upload < NOW() AND a.enabled = 1 ";
+
+
   	// Hapus menu SID dan Donasi
 		$this->db->where('id', 16)->delete('setting_modul');
 		$this->db->where('id', 19)->delete('setting_modul');
