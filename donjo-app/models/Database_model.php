@@ -214,7 +214,7 @@
 
 	private function data_siskeudes()
 	{
-		//insert tabel-tabel keuangan
+		//insert tabel-tabel untuk keuangan
 		if (!$this->db->table_exists('keuangan_master') )
 		{
 			$query = "
